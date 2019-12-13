@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 # coding: utf-8
 # File: triple_extraction.py
-# Author: lhy<lhy_in_blcu@126.com,https://huangyong.github.io>
-# Date: 18-3-12
 from sentence_parser import *
 import re
 import json
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-import xlsxwriter
+# import xlsxwriter
 
-LABEL_DICT = os.path.abspath("/Users/wwd/PycharmProjects/hupu_shoe/opinion_extract_normalize/data/normalize_dict/shoe/new_ltp_label.txt")
+LABEL_DICT = os.path.abspath("new_ltp_label.txt")
 
 
 class TripleExtractor:
@@ -24,7 +22,7 @@ class TripleExtractor:
         with open(fp, 'r') as f:
             tmp = f.readline()
             while tmp:
-                items = tmp.replace('\n', '').decode('utf-8')
+                # items = tmp.replace('\n', '').decode('utf-8')
                 items = items.rsplit(' ', 1)
                 if len(items) == 1:
                     ret.append(items[0])
@@ -39,8 +37,8 @@ class TripleExtractor:
 
     """文章分句处理, 切分长句，冒号，分号，感叹号等做切分标识"""
     def split_sents(self, content):
-        if not isinstance(content, unicode):
-            content = content.decode('utf-8')
+        # if not isinstance(content, unicode):
+        #     content = content.decode('utf-8')
         content = re.sub(u'\<.[a-zA-Z0-9\=\"\:\.\?/\<\>  ]*\>', '\n', content)
         return [sentence.encode('utf-8') for sentence in re.split(u'[？\?！\!。；;\n\t ]', content) if sentence]
 
@@ -372,14 +370,15 @@ class TripleExtractor:
         svos = []
         with tqdm(total=len(sentences)) as pbar:
             for sentence in sentences:
-                if not isinstance(sentence, unicode):
-                    sentence = sentence.decode('utf-8')
+                # if not isinstance(sentence, unicode):
+                #     sentence = sentence.decode('utf-8')
                 if len(sentence) > 55:
                     continue
                 words, postags, child_dict_list, roles_dict, arcs = self.parser.main(sentence)
                 svo = self.rule_main(words, postags, child_dict_list, arcs, roles_dict)
                 # print(json.dumps(svo, ensure_ascii=False))
-                svo = [u'|'.join([i if isinstance(i, unicode) else i.decode('utf-8') for i in son]) for son in svo]
+                # svo = [u'|'.join([i if isinstance(i, unicode) else i.decode('utf-8') for i in son]) for son in svo]
+                svo = [u'|'.join(son) for son in svo]
                 svos.append((sentence, svo))
                 pbar.update(1)
 
@@ -389,13 +388,14 @@ class TripleExtractor:
         sentences = self.split_sents(content)
         svos = []
         for sentence in sentences:
-            if not isinstance(sentence, unicode):
-                sentence = sentence.decode('utf-8')
+            # if not isinstance(sentence, unicode):
+            #     sentence = sentence.decode('utf-8')
             if len(sentence) > 20:
                 continue
             words, postags, child_dict_list, roles_dict, arcs = self.parser.parser_main(sentence)
             svo = self.rule_main(words, postags, child_dict_list, arcs, roles_dict)
-            svo = [u'|'.join([i if isinstance(i, unicode) else i.decode('utf-8') for i in son]) for son in svo]
+            # svo = [u'|'.join([i if isinstance(i, unicode) else i.decode('utf-8') for i in son]) for son in svo]
+            svo = [u'|'.join(son) for son in svo]
             svos.append((sentence, svo))
         return svos
 
@@ -449,7 +449,7 @@ def test_batch(fp):
             tripple_ls.extend(tmp_trip_ls)
             pbar.update(1)
     out_df = pd.DataFrame(zip(sentence_ls, tripple_ls), columns=['sentences', 'tripples'])
-    out_df.to_excel("/Users/wwd/Documents/虎扑识货/tripple_test.xlsx", encoding='utf-8', index=None, engine='xlsxwriter')
+    out_df.to_excel("tripple_test.xlsx", encoding='utf-8', index=None, engine='xlsxwriter')
 
 
 if __name__ == '__main__':
@@ -476,4 +476,3 @@ if __name__ == '__main__':
     # s = "防震也非常好就是要踩开防震"
     # s = "缓震好但启动不行。启动也不拖沓。调教的不错前掌启动不拖沓。防震也非常好就是要踩开防震。"
     test(s)
-    # test_batch("/Users/wwd/Documents/虎扑识货/new_test_all.xlsx")
